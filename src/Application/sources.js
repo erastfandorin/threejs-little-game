@@ -4,7 +4,18 @@ export const initialSources = [
     name: "floor",
     type: "texture",
     path: "/textures/floor/floor.jpg",
-    bytes: "10",
+    bytes: "456701",
+  },
+  {
+    name: "floor",
+    type: "texture",
+    path: "/textures/floor/floor_normal.jpg",
+    bytes: "1032078 ",
+  },  {
+    name: "floor",
+    type: "texture",
+    path: "/textures/floor/floor_occ.jpg",
+    bytes: "190607",
   },
   // Models
   // {

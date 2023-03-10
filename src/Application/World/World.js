@@ -54,7 +54,7 @@ export default class World {
   }
 
   update() {
-    if (this.resources.filesLoaded === this.resources.filesToLoad) {
+    if (this.resources.isSourceLoad) {
     }
   }
 

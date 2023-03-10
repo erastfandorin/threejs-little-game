@@ -9,7 +9,6 @@ import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { MeshoptDecoder } from "meshoptimizer";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
-
 export default class Resources extends EventEmitter {
   constructor(sources) {
     super();
@@ -29,18 +28,18 @@ export default class Resources extends EventEmitter {
     this.loaders.gltfLoader = new GLTFLoader();
     this.loaders.gltfLoader.setMeshoptDecoder(MeshoptDecoder);
     this.loaders.hdriLoader = new RGBELoader();
-    this.loaders.textureLoader = new THREE.TextureLoader();
     this.loaders.cubeTextureLoader = new THREE.CubeTextureLoader();
     this.loaders.fontLoader = new FontLoader();
+    this.loaders.textureLoader = this.initAjaxTextureLoader();
   }
 
-  startLoading(assetsNames) { // :array
-    this.calculateInitialLoadingValue(assetsNames);
+  startLoading(assetsNames) {
+    // assetsNames: array
+    this.calculateLoadingValue(assetsNames);
 
     assetsNames.forEach((asset) => {
       for (const source of this.sources[asset]) {
         if (source.type === "gltfModel") {
-
           const ktx2Loader = new KTX2Loader();
           ktx2Loader.setTranscoderPath("basis/");
           ktx2Loader.detectSupport(this.renderer.instance);
@@ -48,7 +47,7 @@ export default class Resources extends EventEmitter {
 
           const dracoLoader = new DRACOLoader();
           dracoLoader.setDecoderPath("/draco/");
-          dracoLoader.setDecoderConfig( { type: 'js' } );
+          dracoLoader.setDecoderConfig({ type: "js" });
           this.loaders.gltfLoader.setDRACOLoader(dracoLoader);
 
           this.loaders.gltfLoader.load(
@@ -68,7 +67,7 @@ export default class Resources extends EventEmitter {
           this.loaders.textureLoader.load(
             source.path,
             (file) => this.sourceLoaded(source, file),
-            undefined // onProgress callback for textures not supported in threejs
+            (xhr) => this.sourceLoadingProgress(xhr, source.bytes)
           );
         } else if (source.type === "font") {
           this.loaders.fontLoader.load(
@@ -93,19 +92,12 @@ export default class Resources extends EventEmitter {
     });
   }
 
-  calculateInitialLoadingValue(assetsNames) {
+  calculateLoadingValue(assetsNames) {
     this.sourcesTotalBytes = 0;
     this.filesToLoad = 0;
 
     assetsNames.forEach((asset) => {
-      const assetTotalBytes = this.sources[asset].reduce(
-        (totalBytes, source) => {
-          return source.type !== "texture"
-            ? totalBytes + Number(source.bytes)
-            : totalBytes;
-        },
-        0
-      );
+      const assetTotalBytes = this.sources[asset].reduce((totalBytes, source) => totalBytes + Number(source.bytes), 0);
       this.filesToLoad = this.filesToLoad + this.sources[asset].length;
       this.sourcesTotalBytes = this.sourcesTotalBytes + assetTotalBytes;
     });
@@ -128,16 +120,58 @@ export default class Resources extends EventEmitter {
 
     this.filesLoaded++;
 
-    // const parser = file.parser;
-    // const bufferPromises = parser.json.images.map((imageDef) => {
-    //   return parser.getDependency('bufferView', imageDef.bufferView);
-    // });
-    // Promise.all(bufferPromises).then((buffers) => {
-    //   console.log(buffers); // Array<ArrayBuffer>
-    // });
+    this.isSourceLoad = this.filesLoaded === this.filesToLoad;
 
-    if (this.filesLoaded === this.filesToLoad) {
+    if (this.isSourceLoad) {
       this.trigger("ready");
     }
+  }
+
+  initAjaxTextureLoader() {
+    /**
+     * Three's texture loader doesn't support onProgress events, because it uses image tags under the hood.
+     *
+     * A relatively simple workaround is to AJAX the file into the cache with a FileLoader, create an image from the Blob,
+     * then extract that into a texture with a separate TextureLoader call.
+     *
+     * The cache is in memory, so this will work even if the server doesn't return a cache-control header.
+     */
+    const cache = THREE.Cache;
+    cache.enabled = true;
+
+    const textureLoader = new THREE.TextureLoader();
+    const fileLoader = new THREE.FileLoader();
+    fileLoader.setResponseType("blob");
+
+    function load(url, onLoad, onProgress, onError) {
+      fileLoader.load(url, cacheImage, onProgress, onError);
+
+      /**
+       * The cache is currently storing a Blob, but we need to cast it to an Image
+       * or else it won't work as a texture. TextureLoader won't do this automatically.
+       */
+      function cacheImage(blob) {
+        // ObjectURLs should be released as soon as is safe, to free memory
+        const objUrl = URL.createObjectURL(blob);
+        const image = document.createElementNS("http://www.w3.org/1999/xhtml", "img");
+
+        image.onload = () => {
+          cache.add(url, image);
+          URL.revokeObjectURL(objUrl);
+          document.body.removeChild(image);
+          loadImageAsTexture();
+        };
+
+        image.src = objUrl;
+        image.style.visibility = "hidden";
+        document.body.appendChild(image);
+      }
+
+      function loadImageAsTexture() {
+        textureLoader.load(url, onLoad, () => {}, onError);
+      }
+    }
+
+    return Object.assign({}, textureLoader, { load });
   }
 }

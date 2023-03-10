@@ -71,7 +71,7 @@ export default class Interface {
 
     this.time.on("tick", () => {
       if (!isLoaded) {
-        if (this.resources.filesLoaded !== this.resources.filesToLoad) {
+        if (!this.resources.isSourceLoad) {
           this.$loadingBarElement.style.transform = `scaleX(${this.resources.loadingProgress})`;
           this.$loadingCount.textContent = Math.ceil(this.resources.loadingProgress * 100) + "%";
         } else {
