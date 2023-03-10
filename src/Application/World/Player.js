@@ -25,7 +25,8 @@ export default class Player {
     this.interface = this.application.interface;
 
     this.playerHeight = 3.0;
-    this.playerStartPosition = { x: 0, y: 0, z: 0 };
+    // this.playerStartPosition = { x: 0, y: 4, z: 0 };
+    this.playerStartPosition = { x: -63.1, y: 6, z: -74.19 };
 
     this.setCapsule();
     this.addDelayForKeyMethods();
@@ -90,7 +91,6 @@ export default class Player {
     }
 
     if (this.cameras.pointControls.isLocked) {
-
       if (this.keyStates["KeyI"]) {
         this.showLocationInfo();
       }

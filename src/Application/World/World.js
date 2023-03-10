@@ -4,6 +4,7 @@ import Application from "../Application.js";
 import Environment from "./Environment.js";
 import Player from "./Player.js";
 import Floor from "./Floor.js";
+import Level from "./Level.js";
 
 export default class World {
   static instance;
@@ -29,6 +30,7 @@ export default class World {
       if (!this.floor) {
         this.floor = new Floor(this.collider);
         this.environment = new Environment();
+        this.level = new Level(this.collider);
 
         this.player = new Player();
       }

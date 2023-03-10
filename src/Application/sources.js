@@ -18,12 +18,12 @@ export const initialSources = [
     bytes: "190607",
   },
   // Models
-  // {
-  //   name: "level",
-  //   type: "gltfModel",
-  //   path: "/models/level.glb",
-  //   bytes: "50846",
-  // },
+  {
+    name: "level",
+    type: "gltfModel",
+    path: "/models/level_tiny_ktx.glb",
+    bytes: "4389232",
+  },
   // Hdri
   // Font
 ];
