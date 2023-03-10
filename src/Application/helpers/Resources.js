@@ -53,7 +53,8 @@ export default class Resources extends EventEmitter {
           this.loaders.gltfLoader.load(
             source.path,
             (file) => this.sourceLoaded(source, file),
-            (xhr) => this.sourceLoadingProgress(xhr, source.bytes)
+            (xhr) => this.sourceLoadingProgress(xhr, source.bytes),
+            this.sourceError
           );
           ktx2Loader.dispose();
           dracoLoader.dispose();
@@ -61,31 +62,36 @@ export default class Resources extends EventEmitter {
           this.loaders.fbxLoader.load(
             source.path,
             (file) => this.sourceLoaded(source, file),
-            (xhr) => this.sourceLoadingProgress(xhr, source.bytes)
+            (xhr) => this.sourceLoadingProgress(xhr, source.bytes),
+            this.sourceError
           );
         } else if (source.type === "texture") {
           this.loaders.textureLoader.load(
             source.path,
             (file) => this.sourceLoaded(source, file),
-            (xhr) => this.sourceLoadingProgress(xhr, source.bytes)
+            (xhr) => this.sourceLoadingProgress(xhr, source.bytes),
+            this.sourceError
           );
         } else if (source.type === "font") {
           this.loaders.fontLoader.load(
             source.path,
             (file) => this.sourceLoaded(source, file),
-            (xhr) => this.sourceLoadingProgress(xhr, source.bytes)
+            (xhr) => this.sourceLoadingProgress(xhr, source.bytes),
+            this.sourceError
           );
         } else if (source.type === "hdri") {
           this.loaders.hdriLoader.load(
             source.path,
             (file) => this.sourceLoaded(source, file),
-            (xhr) => this.sourceLoadingProgress(xhr, source.bytes)
+            (xhr) => this.sourceLoadingProgress(xhr, source.bytes),
+            this.sourceError
           );
         } else if (source.type === "cubeTexture") {
           this.loaders.cubeTextureLoader.load(
             source.path,
             (file) => this.sourceLoaded(source, file),
-            (xhr) => this.sourceLoadingProgress(xhr, source.bytes)
+            (xhr) => this.sourceLoadingProgress(xhr, source.bytes),
+            this.sourceError
           );
         }
       }
@@ -173,5 +179,9 @@ export default class Resources extends EventEmitter {
     }
 
     return Object.assign({}, textureLoader, { load });
+  }
+
+  sourceError(err) {
+    console.error(err);
   }
 }
